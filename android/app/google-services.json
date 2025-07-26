@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "908926414749",
+    "project_id": "fuse-chat",
+    "storage_bucket": "fuse-chat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:908926414749:android:8fe0e466fa9a95f93e8974",
+        "android_client_info": {
+          "package_name": "com.example.fusechat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdq1KOJuqv8WuwQpyS3yTsTjuKC-Vxl3M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
