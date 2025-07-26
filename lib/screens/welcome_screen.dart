@@ -15,6 +15,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 30.0),
         child: Column(
@@ -23,9 +24,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           children: [
             Row(
               children: [
-                Container(
-                  height: 60.0,
-                  child: Image(image: AssetImage('images/logo.png')),
+                Hero(
+                  tag: 'logo',
+                  child: Container(
+                    height: 60.0,
+                    child: Image(image: AssetImage('images/logo.png')),
+                  ),
                 ),
                 SizedBox(width: 10.0,),
                 Text('Fuse Chat',

@@ -6,8 +6,8 @@ import 'package:fusechat/screens/signup_screen.dart';
 import 'package:fusechat/screens/welcome_screen.dart';// (create later)
 
 void main() async {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(FuseChat());
 }
 
