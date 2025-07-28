@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fusechat/components/rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fusechat/screens/chart_screen.dart';
+import 'package:fusechat/screens/users_screen.dart';
 import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupScreen extends StatefulWidget {
   static const String id = 'signup_screen';
@@ -75,7 +76,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     final newUser = await _auth.createUserWithEmailAndPassword(
                         email: email, password: password);
                     if (newUser != null) {
-                      Navigator.pushNamed(context, ChartScreen.id);
+
+                      await FirebaseFirestore.instance.collection('users').doc(newUser.user!.uid).set({'uid': newUser.user!.uid, 'password': password, 'email': email, 'name': email.split('@')[0], 'createdAt': Timestamp.now(),});
+
+                      Navigator.pushNamed(context, UsersScreen.id);
                     }
                     setState(() {
                       _saving = false;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fusechat/components/rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fusechat/screens/chart_screen.dart';
+import 'package:fusechat/screens/users_screen.dart';
 import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -75,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     final user = await _auth.signInWithEmailAndPassword(
                         email: email, password: password);
                     if (user != null) {
-                      Navigator.pushNamed(context, ChartScreen.id);
+                      Navigator.pushNamed(context, UsersScreen.id);
                     }
                     setState(() {
                       _saving = false;
