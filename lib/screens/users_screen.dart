@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fusechat/screens/chart_screen.dart';
+import 'package:fusechat/screens/welcome_screen.dart';
 
 class UsersScreen extends StatefulWidget {
   static const String id = 'users_screen';
@@ -23,11 +24,21 @@ class _UsersScreenState extends State<UsersScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.blueAccent,
-        centerTitle: true,
+        // centerTitle: true,
         title: Text('Fuse Chat',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+              onPressed: () async{
+               await FirebaseAuth.instance.signOut();
+               Navigator.pushNamed(context, WelcomeScreen.id);
+              },
+              icon: Icon(Icons.logout, color: Colors.white,),
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('users').snapshots(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fusechat/components/rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fusechat/screens/login_screen.dart';
 import 'package:fusechat/screens/users_screen.dart';
 import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -75,19 +76,29 @@ class _SignupScreenState extends State<SignupScreen> {
                   try {
                     final newUser = await _auth.createUserWithEmailAndPassword(
                         email: email, password: password);
-                    if (newUser != null) {
+                    User? user = newUser.user;
+                    if (user != null && !user.emailVerified) {
+                      await user.sendEmailVerification();
 
-                      await FirebaseFirestore.instance.collection('users').doc(newUser.user!.uid).set({'uid': newUser.user!.uid, 'password': password, 'email': email, 'name': email.split('@')[0], 'createdAt': Timestamp.now(),});
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('Verification email sent! Please verify your email before logging in.'),
+                      ));
 
-                      Navigator.pushNamed(context, UsersScreen.id);
+                      await _auth.signOut();
+                      Navigator.pushNamed(context, LoginScreen.id);
+
+                      // Navigator.pushNamed(context, UsersScreen.id);
                     }
-                    setState(() {
-                      _saving = false;
-                    });
-                  }
-                  catch(e){
-                    print(e);
-                  }
+                  }catch (e) {
+                    print('Signup Error: $e');
+                     ScaffoldMessenger.of(context).showSnackBar(
+                     SnackBar(content: Text('Signup failed. Try again.')),
+                     );
+                     } finally {
+                     setState(() {
+                    _saving = false;
+                     });
+                   }
                 },
               ),
             ],

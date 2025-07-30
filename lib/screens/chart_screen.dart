@@ -60,6 +60,7 @@ class _ChartScreenState extends State<ChartScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(widget.reciverEmail,
           style: TextStyle(color: Colors.white),
         ),

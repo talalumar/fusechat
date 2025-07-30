@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fusechat/components/rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,8 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   tag: 'logo',
                   child: Container(
                     height: 200.0,
-                    child:
-                    Image.asset('images/logo.png'),
+                    child: Image.asset('images/logo.png'),
                   ),
                 ),
               ),
@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   prefixIcon: Icon(Icons.email),
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (value){
+                onChanged: (value) {
                   email = value;
                 },
               ),
@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   prefixIcon: Icon(Icons.lock),
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (value){
+                onChanged: (value) {
                   password = value;
                 },
               ),
@@ -68,22 +68,65 @@ class _LoginScreenState extends State<LoginScreen> {
               RoundedButton(
                 color: Colors.lightBlueAccent,
                 text: 'Log In',
-                onpressed: () async{
+                onpressed: () async {
                   setState(() {
                     _saving = true;
                   });
                   try {
-                    final user = await _auth.signInWithEmailAndPassword(
-                        email: email, password: password);
+                    final userCredential = await _auth.signInWithEmailAndPassword(
+                      email: email,
+                      password: password,
+                    );
+                    User? user = userCredential.user;
                     if (user != null) {
-                      Navigator.pushNamed(context, UsersScreen.id);
+                      await user.reload(); // Refresh user data
+                      user = FirebaseAuth.instance.currentUser;
+
+                      if (user!.emailVerified) {
+                        // Check if user exists in Firestore
+                        final userDoc = await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .get();
+
+                        if (!userDoc.exists) {
+                          // Save user to Firestore only after verification
+                          await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user.uid)
+                              .set({
+                                'uid': user.uid,
+                                'email': user.email,
+                                'name': user.email!.split('@')[0],
+                                'createdAt': Timestamp.now(),
+                              });
+                        }
+
+                        // Navigate to UsersScreen
+                        Navigator.pushReplacementNamed(context, UsersScreen.id);
+                      } else {
+                        // Email not verified
+                        await _auth.signOut();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Please verify your email before logging in. Check your inbox.',
+                            ),
+                          ),
+                        );
+                      }
                     }
+                  } catch (e) {
+                    print('Login Error: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Login failed. Please try again.'),
+                      ),
+                    );
+                  } finally {
                     setState(() {
                       _saving = false;
                     });
-                  }
-                  catch(e){
-                    print(e);
                   }
                 },
               ),
@@ -94,4 +137,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
