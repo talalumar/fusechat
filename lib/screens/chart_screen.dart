@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fusechat/components/cloudinary_uploader.dart';
-import 'package:fusechat/components/fullscreen_image.dart';
+import 'package:fusechat/components/message_bubble.dart';
 
 class ChartScreen extends StatefulWidget {
 
@@ -37,17 +37,18 @@ class _ChartScreenState extends State<ChartScreen> {
   final CloudinaryUploader uploader = CloudinaryUploader();
 
   void _onImageSend() async{
-    final imageUrl = await uploader.pickAndUploadImage();
+    final mediaUrl = await uploader.pickAndUploadImageorVideo();
 
-    if(imageUrl != null){
-      print('Uploaded image Url: $imageUrl');
+    if(mediaUrl != null){
+      final isVideo = mediaUrl.contains('.mp4') || mediaUrl.contains('.mov');
+      final messageType = isVideo ? 'video' : 'image';
 
       await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
-        'imageUrl': imageUrl,
+        'mediaUrl': mediaUrl,
         'senderId': currentUser!.uid,
         'receiverId': widget.reciverId,
         'timestamp': Timestamp.now(),
-        'type': 'image',
+        'type': messageType,
       });
     }else{
       print('Image not selected or upload failed');
@@ -87,8 +88,9 @@ class _ChartScreenState extends State<ChartScreen> {
                             final message = messages[index];
                             return MessageBubble(
                               text: (message.data() as Map<String, dynamic>).containsKey('text') ? message['text'] : '',
-                              imageUrl: (message.data() as Map<String, dynamic>).containsKey('imageUrl') ? message['imageUrl'] : null,
+                              mediaUrl: (message.data() as Map<String, dynamic>).containsKey('mediaUrl') ? message['mediaUrl'] : null,
                               isMe: message['senderId'] == FirebaseAuth.instance.currentUser!.uid,
+                              type: (message.data() as Map<String, dynamic>).containsKey('type') ? message['type'] : 'text',
                             );
                           },
                       );
@@ -144,56 +146,3 @@ class _ChartScreenState extends State<ChartScreen> {
   }
 }
 
-
-class MessageBubble extends StatelessWidget {
-  final String text;
-  final String? imageUrl;
-  final bool isMe;
-
-  MessageBubble({required this.text, required this.isMe, this.imageUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    final isImage = imageUrl != null;
-
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onTap: isImage ? (){Navigator.push(context, MaterialPageRoute(builder: (context) => FullscreenImage(imageUrl: imageUrl!)));} : null,
-        child: Container(
-          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          padding: isImage ? EdgeInsets.zero : EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isImage ? Colors.transparent : isMe ? Colors.blueAccent : Colors.grey[300],
-            borderRadius: BorderRadius.circular(isImage ? 0 : 16),
-          ),
-          child: Column(
-            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              if (imageUrl != null)
-                Hero(
-                  tag: imageUrl!,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      imageUrl!,
-                      width: 200,
-                      height: 200,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              if (text.isNotEmpty)
-                Text(
-                  text,
-                  style: TextStyle(
-                    color: isMe ? Colors.white : Colors.black,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
