@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fusechat/components/cloudinary_uploader.dart';
 import 'package:fusechat/components/message_bubble.dart';
+import 'package:fusechat/services/notification_services.dart';
+import 'package:fusechat/services/get_server_key.dart';
 
 class ChartScreen extends StatefulWidget {
 
@@ -21,9 +23,8 @@ class _ChartScreenState extends State<ChartScreen> {
   final currentUser = FirebaseAuth.instance.currentUser;
 
   void sendMessage ()async {
-    if (messageController.text
-        .trim()
-        .isEmpty) return;
+    final text = messageController.text.trim();
+    if (text.isEmpty) return;
 
     await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
       'text': messageController.text.trim(),
@@ -32,6 +33,8 @@ class _ChartScreenState extends State<ChartScreen> {
       'timestamp': Timestamp.now(),
     });
     messageController.clear();
+
+    await _sendPushNotification(text);
   }
 
   final CloudinaryUploader uploader = CloudinaryUploader();
@@ -50,10 +53,41 @@ class _ChartScreenState extends State<ChartScreen> {
         'timestamp': Timestamp.now(),
         'type': messageType,
       });
+      // 🔔 Send push notification
+      await _sendPushNotification("📷 Sent a ${isVideo ? 'video' : 'photo'}");
     }else{
       print('Image not selected or upload failed');
     }
   }
+
+  Future<void> _sendPushNotification(String messageBody) async {
+    try {
+      // 1. Get receiver's FCM token from Firestore
+      final receiverDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.reciverId)
+          .get();
+
+      final receiverToken = receiverDoc['fcmToken'];
+
+      if (receiverToken != null && receiverToken.isNotEmpty) {
+        // 2. Get access token for HTTP v1 API
+        final accessToken = await GetServerKey().getServerKeyToken();
+
+        // 3. Send the notification
+        await NotificationService.sendPushNotification(
+          token: receiverToken,
+          title: currentUser!.email!.replaceAll('@gmail.com', '') ?? "New Message",
+          body: messageBody,
+          accessToken: accessToken,
+        );
+      }
+    } catch (e) {
+      print("❌ Error sending push notification: $e");
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +162,9 @@ class _ChartScreenState extends State<ChartScreen> {
                     shape: CircleBorder(),
                     child: InkWell(
                       onTap: (){
+                        // GetServerKey getServerKey = GetServerKey();
+                        // String acessToken = await getServerKey.getServerKeyToken();
+                        // print(acessToken);
                         sendMessage();
                       },
                       customBorder: CircleBorder(),

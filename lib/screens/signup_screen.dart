@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fusechat/components/rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fusechat/screens/login_screen.dart';
-import 'package:fusechat/screens/users_screen.dart';
 import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupScreen extends StatefulWidget {
   static const String id = 'signup_screen';

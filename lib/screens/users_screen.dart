@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fusechat/screens/chart_screen.dart';
 import 'package:fusechat/screens/welcome_screen.dart';
+import 'package:fusechat/services/notification_services.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class UsersScreen extends StatefulWidget {
   static const String id = 'users_screen';
@@ -17,6 +19,24 @@ class _UsersScreenState extends State<UsersScreen> {
 
   String getChatId(String user1, String user2){
     return user1.hashCode <= user2.hashCode ? '${user1}_$user2' : '${user2}_$user1';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Request permissions
+    FirebaseMessaging.instance.requestPermission();
+
+    // Foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      NotificationService.showNotification(message);
+    });
+
+    // App opened via notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('🔔 App opened from notification');
+    });
   }
   
   @override

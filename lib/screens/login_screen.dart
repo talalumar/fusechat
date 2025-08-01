@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fusechat/components/rounded_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fusechat/screens/chart_screen.dart';
 import 'package:fusechat/screens/users_screen.dart';
 import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String id = 'login_screen';
@@ -18,6 +18,16 @@ class _LoginScreenState extends State<LoginScreen> {
   late String email;
   late String password;
   bool _saving = false;
+
+  Future<void> saveFcmTokenToFirestore(String uid) async {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken != null) {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'fcmToken': fcmToken,
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +111,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'createdAt': Timestamp.now(),
                               });
                         }
+                        // Save FCM token
+                        await saveFcmTokenToFirestore(user.uid);
 
                         // Navigate to UsersScreen
                         Navigator.pushReplacementNamed(context, UsersScreen.id);
