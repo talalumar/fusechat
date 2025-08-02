@@ -5,6 +5,7 @@ import 'package:fusechat/components/cloudinary_uploader.dart';
 import 'package:fusechat/components/message_bubble.dart';
 import 'package:fusechat/services/notification_services.dart';
 import 'package:fusechat/services/get_server_key.dart';
+import 'package:fusechat/services/gemini_service.dart';
 
 class ChartScreen extends StatefulWidget {
 
@@ -21,10 +22,13 @@ class ChartScreen extends StatefulWidget {
 class _ChartScreenState extends State<ChartScreen> {
   TextEditingController messageController = TextEditingController();
   final currentUser = FirebaseAuth.instance.currentUser;
+  bool isGeminiTyping = false;
 
   void sendMessage ()async {
     final text = messageController.text.trim();
     if (text.isEmpty) return;
+
+    final isGeminiChat = widget.reciverId == 'gemini_ai';
 
     await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
       'text': messageController.text.trim(),
@@ -34,7 +38,32 @@ class _ChartScreenState extends State<ChartScreen> {
     });
     messageController.clear();
 
-    await _sendPushNotification(text);
+    // 2. If Gemini, get AI response
+    if (isGeminiChat) {
+      setState(() {
+        isGeminiTyping = true; // Start typing indicator
+      });
+
+      final aiResponse = await GeminiService.getGimniResponse(text);
+
+      // Add Gemini's message
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(widget.chatId)
+          .collection('messages')
+          .add({
+        'text': aiResponse,
+        'senderId': 'gemini_ai',
+        'receiverId': currentUser!.uid,
+        'timestamp': Timestamp.now(),
+      });
+      setState(() {
+        isGeminiTyping = false; // Stop typing indicator
+      });
+    } else {
+      // 🔔 Send push notification to real user
+      await _sendPushNotification(text);
+    }
   }
 
   final CloudinaryUploader uploader = CloudinaryUploader();
@@ -105,32 +134,7 @@ class _ChartScreenState extends State<ChartScreen> {
         child: Column(
           children: [
             Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').orderBy('timestamp', descending: true).snapshots(),
-                    builder: (context, snapshot){
-                      if(snapshot.connectionState == ConnectionState.waiting){
-                        return Center(child: CircularProgressIndicator(backgroundColor: Colors.blueAccent,),);
-                      }
-                      if(!snapshot.hasData || snapshot.data!.docs.isEmpty){
-                        return Center(child: Text('No message yet'),);
-                      }
-                      final messages = snapshot.data!.docs;
-
-                      return ListView.builder(
-                        reverse: true,
-                        itemCount: messages.length,
-                          itemBuilder: (context, index){
-                            final message = messages[index];
-                            return MessageBubble(
-                              text: (message.data() as Map<String, dynamic>).containsKey('text') ? message['text'] : '',
-                              mediaUrl: (message.data() as Map<String, dynamic>).containsKey('mediaUrl') ? message['mediaUrl'] : null,
-                              isMe: message['senderId'] == FirebaseAuth.instance.currentUser!.uid,
-                              type: (message.data() as Map<String, dynamic>).containsKey('type') ? message['type'] : 'text',
-                            );
-                          },
-                      );
-                    }
-                ),
+                child: MessageList(widget: widget, isGeminiTyping: isGeminiTyping),
             ),
         
             Container(
@@ -162,9 +166,6 @@ class _ChartScreenState extends State<ChartScreen> {
                     shape: CircleBorder(),
                     child: InkWell(
                       onTap: (){
-                        // GetServerKey getServerKey = GetServerKey();
-                        // String acessToken = await getServerKey.getServerKeyToken();
-                        // print(acessToken);
                         sendMessage();
                       },
                       customBorder: CircleBorder(),
@@ -180,6 +181,77 @@ class _ChartScreenState extends State<ChartScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+class MessageList extends StatelessWidget {
+  const MessageList({
+    super.key,
+    required this.widget,
+    required this.isGeminiTyping,
+  });
+
+  final ChartScreen widget;
+  final bool isGeminiTyping;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').orderBy('timestamp', descending: true).snapshots(),
+        builder: (context, snapshot){
+          if(!snapshot.hasData){
+            return Center(child: CircularProgressIndicator(backgroundColor: Colors.blueAccent,),);
+          }
+          if(!snapshot.hasData || snapshot.data!.docs.isEmpty){
+            return Center(child: Text('No message yet'),);
+          }
+
+          final messages = snapshot.data!.docs;
+
+          return ListView.builder(
+            reverse: true,
+            itemCount: isGeminiTyping && widget.reciverId == 'gemini_ai' ? messages.length + 1 : messages.length,
+              itemBuilder: (context, index){
+                // If it's the first item and Gemini is typing, show typing bubble
+                if (isGeminiTyping && widget.reciverId == 'gemini_ai' && index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          'Gemini is typing...',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                //  Adjust index if Gemini is typing
+                final messageIndex = isGeminiTyping && widget.reciverId == 'gemini_ai'
+                    ? index - 1
+                    : index;
+                final message = messages[messageIndex];
+
+                return MessageBubble(
+                  text: (message.data() as Map<String, dynamic>).containsKey('text') ? message['text'] : '',
+                  mediaUrl: (message.data() as Map<String, dynamic>).containsKey('mediaUrl') ? message['mediaUrl'] : null,
+                  isMe: message['senderId'] == FirebaseAuth.instance.currentUser!.uid,
+                  type: (message.data() as Map<String, dynamic>).containsKey('type') ? message['type'] : 'text',
+                );
+              },
+          );
+        }
     );
   }
 }

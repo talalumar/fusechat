@@ -78,15 +78,19 @@ class _UsersScreenState extends State<UsersScreen> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Card(
+                      color: Colors.white,
                       elevation: 0.5,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       child: ListTile(
                         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         leading: CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          child: Text(user['email'][0].toUpperCase(),
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          backgroundColor: user['uid'] == 'gemini_ai' ? Colors.white : Colors.blueAccent,
+                          backgroundImage: user['uid'] == 'gemini_ai'
+                              ? AssetImage('images/meta.png') // Add an AI icon here
+                              : null,
+                          child: user['uid'] != 'gemini_ai'
+                              ? Text(user['email'][0].toUpperCase(), style: TextStyle(color: Colors.white))
+                              : null,
                         ),
                         title: Text(user['name'],
                           style: TextStyle(
@@ -94,10 +98,10 @@ class _UsersScreenState extends State<UsersScreen> {
                             fontSize: 16,
                           ),
                         ),
-                        subtitle: Text(
+                        subtitle: user['uid'] != 'gemini_ai' ? Text(
                           'Hey there! I\'m using FuseChat',
                           style: TextStyle(color: Colors.grey[600]),
-                        ),
+                        ) : null,
                         onTap: (){
                           final selectedUserId = user['uid'];
                           final currentUserId = FirebaseAuth.instance.currentUser!.uid;

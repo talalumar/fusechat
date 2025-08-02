@@ -3,6 +3,7 @@ import 'package:fusechat/components/fullscreen_image.dart';
 import 'package:fusechat/components/videoplayer_screen.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'dart:typed_data';
+import 'package:gpt_markdown/gpt_markdown.dart';
 
 class MessageBubble extends StatelessWidget {
   final String text;
@@ -33,10 +34,10 @@ class MessageBubble extends StatelessWidget {
             ? (){Navigator.push(context, MaterialPageRoute(builder: (context) => FullscreenImage(imageUrl: mediaUrl!)));}
             : null,
         child: Container(
-          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          margin: (isImage || isVideo) ? EdgeInsets.symmetric(vertical: 4, horizontal: 8) :isMe ? EdgeInsets.only(left: 40, right: 8, bottom: 4, top: 4) : EdgeInsets.only(left: 8, right: 40, bottom: 4, top: 4),
           padding: (isImage || isVideo) ? EdgeInsets.zero : EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: (isImage || isVideo) ? Colors.transparent : isMe ? Colors.blueAccent : Colors.grey[300],
+            color: (isImage || isVideo) ? Colors.transparent : isMe ? Colors.blueAccent : Colors.grey[100],
             borderRadius: BorderRadius.circular(isImage ? 0 : 16),
           ),
           child: Column(
@@ -96,7 +97,7 @@ class MessageBubble extends StatelessWidget {
                   },
                 ),
               if (text.isNotEmpty)
-                Text(
+                GptMarkdown(
                   text,
                   style: TextStyle(
                     color: isMe ? Colors.white : Colors.black,
