@@ -28,12 +28,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: ModalProgressHUD(
+        progressIndicator: CircularProgressIndicator(color: Color(0xFF419cd7)),
         inAsyncCall: _saving,
         child: Padding(
           padding: EdgeInsets.all(30.0),
@@ -51,42 +51,70 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               SizedBox(height: 45.0),
-              TextField(
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                  border: OutlineInputBorder(),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  inputDecorationTheme: const InputDecorationTheme(
+                    floatingLabelStyle: TextStyle(color: Color(0xFF419cd7)),
+                    border: OutlineInputBorder(), // label when focused
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Color(0xFF419cd7),
+                        width: 2,
+                      ), // border when focused
+                    ),
+                  ),
                 ),
-                onChanged: (value) {
-                  email = value;
-                },
+                child: TextField(
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                  onChanged: (value) {
+                    email = value;
+                  },
+                ),
               ),
               SizedBox(height: 10.0),
-              TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock),
-                  border: OutlineInputBorder(),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  inputDecorationTheme: const InputDecorationTheme(
+                    floatingLabelStyle: TextStyle(color: Color(0xFF419cd7)),
+                    border: OutlineInputBorder(), // label when focused
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Color(0xFF419cd7),
+                        width: 2,
+                      ), // border when focused
+                    ),
+                  ),
                 ),
-                onChanged: (value) {
-                  password = value;
-                },
+                child: TextField(
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: Icon(Icons.lock),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) {
+                    password = value;
+                  },
+                ),
               ),
               SizedBox(height: 20.0),
               RoundedButton(
-                color: Colors.lightBlueAccent,
+                color: Color(0xFF419cd7),
                 text: 'Log In',
                 onpressed: () async {
                   setState(() {
                     _saving = true;
                   });
                   try {
-                    final userCredential = await _auth.signInWithEmailAndPassword(
-                      email: email,
-                      password: password,
-                    );
+                    final userCredential = await _auth
+                        .signInWithEmailAndPassword(
+                          email: email,
+                          password: password,
+                        );
                     User? user = userCredential.user;
                     if (user != null) {
                       await user.reload(); // Refresh user data
@@ -121,9 +149,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         await _auth.signOut();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
+                            content: const Text(
                               'Please verify your email before logging in. Check your inbox.',
+                              style: TextStyle(color: Colors.black),
                             ),
+                            backgroundColor: Colors.white,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            margin: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            elevation: 6,
                           ),
                         );
                       }
@@ -132,7 +171,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     print('Login Error: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Login failed. Please try again.'),
+                        content: const Text(
+                          'Login failed. Please try again.',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        backgroundColor: Colors.white,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        elevation: 6,
                       ),
                     );
                   } finally {

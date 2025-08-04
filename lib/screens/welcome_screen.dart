@@ -43,7 +43,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
             SizedBox(height: 48.0,),
             RoundedButton(
-              color: Colors.lightBlueAccent,
+              color: Color(0xFF419cd7),
               text: 'Log In',
               onpressed: (){
                 Navigator.pushNamed(context, LoginScreen.id);
@@ -51,7 +51,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
             SizedBox(height: 20.0,),
             RoundedButton(
-              color: Colors.blueAccent,
+              color: Color(0xFF419cd7),
               text: 'Sign Up',
               onpressed: (){
                 Navigator.pushNamed(context, SignupScreen.id);

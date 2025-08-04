@@ -29,6 +29,8 @@ dependencies:
   googleapis_auth: ^2.0.0
   gpt_markdown: ^1.1.2
   animated_text_kit: ^4.2.3
+  path_provider: ^2.1.5
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

@@ -22,6 +22,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: ModalProgressHUD(
+        progressIndicator: CircularProgressIndicator(color: Color(0xFF419cd7)),
         inAsyncCall: _saving,
         child: Padding(
           padding: EdgeInsets.all(30.0),
@@ -34,69 +35,126 @@ class _SignupScreenState extends State<SignupScreen> {
                   tag: 'logo',
                   child: Container(
                     height: 200.0,
-                    child:
-                      Image.asset('images/logo.png'),
+                    child: Image.asset('images/logo.png'),
                   ),
                 ),
               ),
               SizedBox(height: 45.0),
-              TextField(
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                  border: OutlineInputBorder(),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  inputDecorationTheme: const InputDecorationTheme(
+                    floatingLabelStyle: TextStyle(color: Color(0xFF419cd7)),
+                    border: OutlineInputBorder(), // label when focused
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Color(0xFF419cd7),
+                        width: 2,
+                      ), // border when focused
+                    ),
+                  ),
                 ),
-                onChanged: (value){
-                  email = value;
-                },
+                child: TextField(
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                  onChanged: (value) {
+                    email = value;
+                  },
+                ),
               ),
               SizedBox(height: 10.0),
-              TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock),
-                  border: OutlineInputBorder(),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  inputDecorationTheme: const InputDecorationTheme(
+                    floatingLabelStyle: TextStyle(color: Color(0xFF419cd7)),
+                    border: OutlineInputBorder(), // label when focused
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Color(0xFF419cd7),
+                        width: 2,
+                      ), // border when focused
+                    ),
+                  ),
                 ),
-                onChanged: (value){
-                  password = value;
-                },
+                child: TextField(
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  onChanged: (value) {
+                    password = value;
+                  },
+                ),
               ),
               SizedBox(height: 20.0),
               RoundedButton(
-                color: Colors.blueAccent,
+                color: Color(0xFF419cd7),
                 text: 'Sign Up',
-                onpressed: () async{
+                onpressed: () async {
                   setState(() {
                     _saving = true;
                   });
                   try {
                     final newUser = await _auth.createUserWithEmailAndPassword(
-                        email: email, password: password);
+                      email: email,
+                      password: password,
+                    );
                     User? user = newUser.user;
                     if (user != null && !user.emailVerified) {
                       await user.sendEmailVerification();
 
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Verification email sent! Please verify your email before logging in.'),
-                      ));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            'Verification email sent! Please verify your email before logging in.',
+                            style: TextStyle(color: Colors.black),
+                          ),
+                          backgroundColor: Colors.white,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          elevation: 6,
+                        ),
+                      );
 
                       await _auth.signOut();
                       Navigator.pushNamed(context, LoginScreen.id);
 
                       // Navigator.pushNamed(context, UsersScreen.id);
                     }
-                  }catch (e) {
+                  } catch (e) {
                     print('Signup Error: $e');
-                     ScaffoldMessenger.of(context).showSnackBar(
-                     SnackBar(content: Text('Signup failed. Try again.')),
-                     );
-                     } finally {
-                     setState(() {
-                    _saving = false;
-                     });
-                   }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'Signup failed. Try again.',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        backgroundColor: Colors.white,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        elevation: 6,
+                      ),
+                    );
+                  } finally {
+                    setState(() {
+                      _saving = false;
+                    });
+                  }
                 },
               ),
             ],

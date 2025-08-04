@@ -75,13 +75,24 @@ class _ChartScreenState extends State<ChartScreen> {
       final isVideo = mediaUrl.contains('.mp4') || mediaUrl.contains('.mov');
       final messageType = isVideo ? 'video' : 'image';
 
-      await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').add({
-        'mediaUrl': mediaUrl,
+      // 1. Add placeholder message (type: uploading)
+      final docRef = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(widget.chatId)
+          .collection('messages')
+          .add({
         'senderId': currentUser!.uid,
         'receiverId': widget.reciverId,
         'timestamp': Timestamp.now(),
+        'type': 'uploading',
+      });
+
+      // 2. Upload finished, update the message with actual data
+      await docRef.update({
+        'mediaUrl': mediaUrl,
         'type': messageType,
       });
+
       // 🔔 Send push notification
       await _sendPushNotification("📷 Sent a ${isVideo ? 'video' : 'photo'}");
     }else{
@@ -128,7 +139,7 @@ class _ChartScreenState extends State<ChartScreen> {
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Color(0xFF419cd7),
       ),
       body: SafeArea(
         child: Column(
@@ -142,9 +153,11 @@ class _ChartScreenState extends State<ChartScreen> {
               color: Colors.white,
               child: Row(
                 children: [
-                  IconButton(
+                  widget.reciverId == 'gemini_ai'
+                      ? Container()
+                      : IconButton(
                       onPressed: _onImageSend,
-                      icon: Icon(Icons.image, color: Colors.blueAccent,),
+                      icon: Icon(Icons.image, color: Color(0xFF419cd7),),
                   ),
                   Expanded(
                       child: TextField(
@@ -152,17 +165,17 @@ class _ChartScreenState extends State<ChartScreen> {
                         decoration: InputDecoration(
                           hintText: "Type a message...",
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueAccent),
+                            borderSide: BorderSide(color: Color(0xFF419cd7)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueAccent, width: 2.0),
+                            borderSide: BorderSide(color: Color(0xFF419cd7), width: 2.0),
                           ),
                         ),
                       ),
                   ),
                   SizedBox(width: 8,),
                   Material(
-                    color: Colors.blueAccent,
+                    color: Color(0xFF419cd7),
                     shape: CircleBorder(),
                     child: InkWell(
                       onTap: (){
@@ -202,7 +215,7 @@ class MessageList extends StatelessWidget {
         stream: FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').orderBy('timestamp', descending: true).snapshots(),
         builder: (context, snapshot){
           if(!snapshot.hasData){
-            return Center(child: CircularProgressIndicator(backgroundColor: Colors.blueAccent,),);
+            return Center(child: CircularProgressIndicator(color: Color(0xFF419cd7),),);
           }
           if(!snapshot.hasData || snapshot.data!.docs.isEmpty){
             return Center(child: Text('No message yet'),);
