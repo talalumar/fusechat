@@ -1,25 +1,25 @@
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:fusechat/components/videoplayer_screen.dart';
 import 'package:fusechat/components/fullscreen_image.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 
 class MessageBubble extends StatefulWidget {
   final String text;
   final String? mediaUrl;
   final bool isMe;
   final String? type;
+  final String? thumbnailPath;
 
   const MessageBubble({
+    Key? key,
     required this.text,
     required this.isMe,
     this.mediaUrl,
     this.type,
-  });
+    this.thumbnailPath,
+  }) : super(key: key);
 
   @override
   State<MessageBubble> createState() => _MessageBubbleState();
@@ -27,46 +27,7 @@ class MessageBubble extends StatefulWidget {
 
 
 class _MessageBubbleState extends State<MessageBubble> {
-  Uint8List? _thumbnail;
-  String? _thumbnailPath;
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.type == 'video' && widget.mediaUrl != null) {
-      _loadOrCreateThumbnail(widget.mediaUrl!);
-    }
-  }
-
-  Future<void> _loadOrCreateThumbnail(String videoUrl) async {
-    final directory = await getTemporaryDirectory();
-    final fileName = Uri.parse(videoUrl).pathSegments.last.split('?').first;
-    final path = '${directory.path}/thumb_$fileName.jpg';
-    final file = File(path);
-
-    if (await file.exists()) {
-      // ✅ Thumbnail already cached
-      setState(() {
-        _thumbnailPath = path;
-      });
-    } else {
-      // ❌ No thumbnail, generate and save
-      final data = await VideoThumbnail.thumbnailData(
-        video: videoUrl,
-        imageFormat: ImageFormat.JPEG,
-        maxWidth: 200,
-        quality: 25,
-      );
-      if (data != null) {
-        await file.writeAsBytes(data);
-        if (mounted) {
-          setState(() {
-            _thumbnailPath = path;
-          });
-        }
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +70,7 @@ class _MessageBubbleState extends State<MessageBubble> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(strokeWidth: 2),
+            CircularProgressIndicator(color: Colors.white,),
             SizedBox(width: 8),
             Text("Sending...", style: TextStyle(color: Colors.white)),
           ],
@@ -132,7 +93,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 ),
 
               if (isVideo)
-                _thumbnailPath == null
+                widget.thumbnailPath == null
                     ? Container(
                   width: 200,
                   height: 200,
@@ -151,11 +112,13 @@ class _MessageBubbleState extends State<MessageBubble> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(_thumbnailPath!),
+                        child: CachedNetworkImage(
+                          imageUrl: widget.thumbnailPath!,
                           width: 200,
                           height: 200,
                           fit: BoxFit.cover,
+                          placeholder: (_, __) => Center(child: CircularProgressIndicator(color: Color(0xFF419cd7),)),
+                          errorWidget: (_, __, ___) => Icon(Icons.error),
                         ),
                       ),
                       const Icon(Icons.play_circle_fill, color: Colors.white, size: 48),
@@ -176,3 +139,4 @@ class _MessageBubbleState extends State<MessageBubble> {
     );
   }
 }
+

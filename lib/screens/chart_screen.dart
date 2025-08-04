@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -68,37 +70,71 @@ class _ChartScreenState extends State<ChartScreen> {
 
   final CloudinaryUploader uploader = CloudinaryUploader();
 
-  void _onImageSend() async{
-    final mediaUrl = await uploader.pickAndUploadImageorVideo();
+  String _getCloudinaryThumbnailUrl(String videoUrl) {
+    final uri = Uri.parse(videoUrl);
+    final parts = uri.pathSegments;
 
-    if(mediaUrl != null){
-      final isVideo = mediaUrl.contains('.mp4') || mediaUrl.contains('.mov');
-      final messageType = isVideo ? 'video' : 'image';
+    final cloudName = parts[0]; // e.g., "res.cloudinary.com/yourname"
+    final basePathIndex = parts.indexOf("upload");
+    final publicId = parts.sublist(basePathIndex + 1).join('/').replaceAll('.mp4', '').replaceAll('.mov', '');
 
-      // 1. Add placeholder message (type: uploading)
-      final docRef = await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .add({
-        'senderId': currentUser!.uid,
-        'receiverId': widget.reciverId,
-        'timestamp': Timestamp.now(),
-        'type': 'uploading',
-      });
+    return "https://res.cloudinary.com/$cloudName/video/upload/so_2,w_400,h_300,c_fill/$publicId.jpg";
+  }
 
-      // 2. Upload finished, update the message with actual data
-      await docRef.update({
-        'mediaUrl': mediaUrl,
-        'type': messageType,
-      });
+  void _onImageSend() async {
+    // STEP 1: Pick file only (without upload yet)
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'mp4', 'mov', 'avi'],
+    );
 
-      // 🔔 Send push notification
-      await _sendPushNotification("📷 Sent a ${isVideo ? 'video' : 'photo'}");
-    }else{
-      print('Image not selected or upload failed');
+    if (result == null || result.files.isEmpty) return;
+
+    final filePath = result.files.first.path!;
+    final isVideo = filePath.endsWith('.mp4') || filePath.endsWith('.mov') || filePath.endsWith('.avi');
+    final messageType = isVideo ? 'video' : 'image';
+
+    // STEP 2: Show sending placeholder message first
+    final docRef = await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .add({
+      'senderId': currentUser!.uid,
+      'receiverId': widget.reciverId,
+      'timestamp': Timestamp.now(),
+      'type': 'uploading',
+    });
+
+    try {
+      // STEP 3: Upload the file now
+      final mediaUrl = await uploader.uploadToCloudinary(File(filePath), isVideo ? 'video' : 'image');
+
+      if (mediaUrl != null) {
+        // STEP 4: Optional – Cloudinary thumbnail for video
+        String? thumbnailUrl;
+        if (isVideo) {
+          thumbnailUrl = _getCloudinaryThumbnailUrl(mediaUrl);
+        }
+
+        // STEP 5: Update placeholder message with real data
+        await docRef.update({
+          'mediaUrl': mediaUrl,
+          'type': messageType,
+          if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+        });
+
+        // ✅STEP 6: Push notification
+        await _sendPushNotification("📷 Sent a ${isVideo ? 'video' : 'photo'}");
+      } else {
+        await docRef.delete(); // Clean up failed upload
+      }
+    } catch (e) {
+      // print('Upload failed: $e');
+      await docRef.delete(); // Clean up failed upload
     }
   }
+
 
   Future<void> _sendPushNotification(String messageBody) async {
     try {
@@ -257,10 +293,12 @@ class MessageList extends StatelessWidget {
                 final message = messages[messageIndex];
 
                 return MessageBubble(
+                  key: ValueKey(message.id),
                   text: (message.data() as Map<String, dynamic>).containsKey('text') ? message['text'] : '',
                   mediaUrl: (message.data() as Map<String, dynamic>).containsKey('mediaUrl') ? message['mediaUrl'] : null,
                   isMe: message['senderId'] == FirebaseAuth.instance.currentUser!.uid,
                   type: (message.data() as Map<String, dynamic>).containsKey('type') ? message['type'] : 'text',
+                  thumbnailPath: (message.data() as Map<String, dynamic>).containsKey('thumbnailUrl') ? message['thumbnailUrl'] : null,
                 );
               },
           );
