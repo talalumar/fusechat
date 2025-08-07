@@ -54,10 +54,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
                 child: TextField(
+                  style: TextStyle(color: Colors.black),
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    prefixIcon: Icon(Icons.email),
+                    labelStyle: TextStyle(color: Colors.grey[700]),
+                    prefixIcon: Icon(Icons.email, color: Colors.grey[700],),
                   ),
                   onChanged: (value) {
                     email = value;
@@ -79,10 +81,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
                 child: TextField(
+                  style: TextStyle(color: Colors.black),
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock),
+                    labelStyle: TextStyle(color: Colors.grey[700]),
+                    prefixIcon: Icon(Icons.lock, color: Colors.grey[700],),
                   ),
                   onChanged: (value) {
                     password = value;
