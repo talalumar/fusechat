@@ -37,6 +37,7 @@ class _ChartScreenState extends State<ChartScreen> {
       'senderId': currentUser!.uid,
       'receiverId': widget.reciverId,
       'timestamp': Timestamp.now(),
+      'isSeen': false,
     });
     messageController.clear();
 
@@ -103,6 +104,7 @@ class _ChartScreenState extends State<ChartScreen> {
       'senderId': currentUser!.uid,
       'receiverId': widget.reciverId,
       'timestamp': Timestamp.now(),
+      'isSeen': false,
       'type': 'uploading',
     });
 
@@ -163,19 +165,37 @@ class _ChartScreenState extends State<ChartScreen> {
     }
   }
 
+  void _markMessagesAsSeen() async {
+    final query = await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .where('receiverId', isEqualTo: currentUser!.uid)
+        .where('isSeen', isEqualTo: false)
+        .get();
 
+    for (var doc in query.docs) {
+      doc.reference.update({'isSeen': true});
+    }
+  }
+
+   @override
+  void initState() {
+    super.initState();
+    _markMessagesAsSeen();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(widget.reciverEmail,
-          style: TextStyle(color: Colors.white),
+        // iconTheme: IconThemeData(color: ),
+        title: Text(widget.reciverEmail.split('@')[0],
+          style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
         ),
-        centerTitle: true,
-        backgroundColor: Color(0xFF419cd7),
+        // centerTitle: true,
+        backgroundColor: Theme.of(context).primaryColor,
       ),
       body: SafeArea(
         child: Column(
@@ -186,32 +206,33 @@ class _ChartScreenState extends State<ChartScreen> {
         
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              color: Colors.white,
+              // color: Colors.white,
               child: Row(
                 children: [
                   widget.reciverId == 'gemini_ai'
                       ? Container()
                       : IconButton(
                       onPressed: _onImageSend,
-                      icon: Icon(Icons.image, color: Color(0xFF419cd7),),
+                      icon: Icon(Icons.image, color: Theme.of(context).primaryColor,),
                   ),
                   Expanded(
                       child: TextField(
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
                         controller: messageController,
                         decoration: InputDecoration(
                           hintText: "Type a message...",
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFF419cd7)),
+                            borderSide: BorderSide(color: Theme.of(context).primaryColor),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFF419cd7), width: 2.0),
+                            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0),
                           ),
                         ),
                       ),
                   ),
                   SizedBox(width: 8,),
                   Material(
-                    color: Color(0xFF419cd7),
+                    color: Theme.of(context).primaryColor,
                     shape: CircleBorder(),
                     child: InkWell(
                       onTap: (){

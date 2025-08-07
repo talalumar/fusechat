@@ -52,8 +52,8 @@ class _MessageBubbleState extends State<MessageBubble> {
             color: (isImage || isVideo)
                 ? Colors.transparent
                 : widget.isMe
-                ? Color(0xFF419cd7)
-                : Colors.grey[100],
+                ? Theme.of(context).primaryColor
+                : Theme.of(context).textTheme.bodyLarge?.color,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -129,7 +129,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 GptMarkdown(
                   widget.text,
                   style: TextStyle(
-                    color: widget.isMe ? Colors.white : Colors.black,
+                    color: widget.isMe ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
             ],
