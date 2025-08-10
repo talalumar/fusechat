@@ -43,13 +43,13 @@ class FuseChat extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.light,
         primaryColor: Color(0xFF419cd7),
-        scaffoldBackgroundColor: Colors.white, // 👈 Background white
-        cardColor: Colors.white, // 👈 Cards white
+        scaffoldBackgroundColor: Colors.white,
+        cardColor: Colors.white,
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.white, // 👈 AppBar white
-          iconTheme: IconThemeData(color: Colors.black), // 👈 AppBar icon black
+          backgroundColor: Colors.white,
+          iconTheme: IconThemeData(color: Colors.black),
           titleTextStyle: TextStyle(
-            color: Color(0xFF419cd7), // 👈 AppBar title blue
+            color: Color(0xFF419cd7),
             fontSize: 20,
           ),
         ),
@@ -66,7 +66,7 @@ class FuseChat extends StatelessWidget {
         // primarySwatch: Colors.blue,
         primaryColor: Color(0x99419cd7),
         scaffoldBackgroundColor: Colors.black54,
-        cardColor: Color(0xFF1E1E1E), // 👈 makes cards dark
+        cardColor: Color(0xFF1E1E1E),
         appBarTheme: AppBarTheme(
           backgroundColor: Color(0xFF121212),
           iconTheme: IconThemeData(color: Colors.white),

@@ -41,7 +41,7 @@ class _ChartScreenState extends State<ChartScreen> {
     });
     messageController.clear();
 
-    // 2. If Gemini, get AI response
+
     if (isGeminiChat) {
       setState(() {
         isGeminiTyping = true; // Start typing indicator
@@ -64,7 +64,7 @@ class _ChartScreenState extends State<ChartScreen> {
         isGeminiTyping = false; // Stop typing indicator
       });
     } else {
-      // 🔔 Send push notification to real user
+      //Send push notification to real user
       await _sendPushNotification(text);
     }
   }
@@ -83,7 +83,7 @@ class _ChartScreenState extends State<ChartScreen> {
   }
 
   void _onImageSend() async {
-    // STEP 1: Pick file only (without upload yet)
+    //Pick file only (without upload yet)
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['jpg', 'jpeg', 'png', 'mp4', 'mov', 'avi'],
@@ -95,7 +95,7 @@ class _ChartScreenState extends State<ChartScreen> {
     final isVideo = filePath.endsWith('.mp4') || filePath.endsWith('.mov') || filePath.endsWith('.avi');
     final messageType = isVideo ? 'video' : 'image';
 
-    // STEP 2: Show sending placeholder message first
+    //Show sending placeholder message first
     final docRef = await FirebaseFirestore.instance
         .collection('chats')
         .doc(widget.chatId)
@@ -109,7 +109,7 @@ class _ChartScreenState extends State<ChartScreen> {
     });
 
     try {
-      // STEP 3: Upload the file now
+      //Upload the file now
       final mediaUrl = await uploader.uploadToCloudinary(File(filePath), isVideo ? 'video' : 'image');
 
       if (mediaUrl != null) {
@@ -119,15 +119,15 @@ class _ChartScreenState extends State<ChartScreen> {
           thumbnailUrl = _getCloudinaryThumbnailUrl(mediaUrl);
         }
 
-        // STEP 5: Update placeholder message with real data
+        // Update placeholder message with real data
         await docRef.update({
           'mediaUrl': mediaUrl,
           'type': messageType,
           if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
         });
 
-        // ✅STEP 6: Push notification
-        await _sendPushNotification("📷 Sent a ${isVideo ? 'video' : 'photo'}");
+        // Push notification
+        await _sendPushNotification("Sent a ${isVideo ? 'video' : 'photo'}");
       } else {
         await docRef.delete(); // Clean up failed upload
       }
@@ -161,7 +161,7 @@ class _ChartScreenState extends State<ChartScreen> {
         );
       }
     } catch (e) {
-      print("❌ Error sending push notification: $e");
+      print("Error sending push notification: $e");
     }
   }
 

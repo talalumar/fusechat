@@ -39,7 +39,7 @@ class _UsersScreenState extends State<UsersScreen> {
 
     // App opened via notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('🔔 App opened from notification');
+      // print('App opened from notification');
     });
   }
 
